@@ -1,0 +1,156 @@
+SIMULATION REPORT FOR RAM FUNCTIONALITY:
+
+S
+1. OBJECTIVE:
+
+The objective of this simulation is to demonstrate the fundamental functionality of Random Access Memory (RAM).
+ This includes:
+A) Memory Initialization
+
+B) Writing data to specific memory addresses
+
+C) Reading data from specific memory addresses
+
+D) Verifying correct memory operations
+
+
+
+2. SIMULATION OVERVIEW:
+
+Random Access Memory (RAM) is an essential component in digital systems, providing fast and efficient read and write access to memory locations. In this simulation, we focus on the following key RAM operations:
+
+A) Memory Initialization: Setting up memory locations that can be accessed randomly.
+
+B) Write Operation: Storing data at specific memory addresses.
+
+C) Read Operation: Retrieving data from specific memory addresses.
+
+D) Error Handling: Addressing situations where operations are performed on invalid memory locations (e.g., out-of-bounds access).
+
+For this simulation, we use Verilog to model the RAM functionality. The simulation includes a RAM module that supports basic read and write operations with control signals. A testbench is used to verify the functionality of the RAM by simulating memory writes, reads, and boundary checks.
+
+
+
+
+3. VERILOG DESIGN:
+
+1) RAM Module:
+The RAM module is designed to support 16 memory locations (16 addresses) and can store 8-bit data in each location. It uses the following inputs and outputs:
+
+A) clk: The clock signal for synchronization.
+
+B) address: A 4-bit input to specify the memory address (16 memory locations).
+
+C) data_in: An 8-bit input to store data during write operations.
+
+D) data_out: An 8-bit output to retrieve data during read operations.
+
+E)we: A control signal (write enable) that allows writing data when active.
+
+The module contains a 16-location memory array where each location stores 8 bits of data. On the rising edge of the clock, the module checks the we signal:
+
+* If we is high, it writes the data to the specified address.
+* If we is low, it outputs the data from the specified address.
+
+
+
+
+4. VERILOG CODE:
+
+module RAM (
+    input clk,                // Clock signal
+    input [3:0] address,      // 4-bit address (16 memory locations)
+    input [7:0] data_in,      // 8-bit data input for writing
+    output reg [7:0] data_out, // 8-bit data output for reading
+    input we                  // Write enable signal (active high)
+);
+
+    // 16 locations, each storing 8 bits of data
+    reg [7:0] memory [0:15]; 
+
+    always @(posedge clk) begin
+        if (we) begin
+            memory[address] <= data_in;  // Write operation
+        end
+        data_out <= memory[address];    // Read operation
+    end
+
+endmodule
+
+
+
+
+5. TESTBENCH FOR RAM SIMULATION:
+
+The testbench initializes the clk, address, data_in, and we signals, simulates a clock, and executes a sequence of memory read and write operations. The simulation also prints the state of the memory after each operation for verification.
+
+Verilog Code For Testbench:
+
+module RAM_tb;
+
+    reg clk;
+    reg [3:0] address;
+    reg [7:0] data_in;
+    reg we;
+    wire [7:0] data_out;
+
+    // Instantiate the RAM module
+    RAM uut (
+        .clk(clk),
+        .address(address),
+        .data_in(data_in),
+        .data_out(data_out),
+        .we(we)
+    );
+
+    // Clock generation (50 MHz clock)
+    always begin
+        #10 clk = ~clk;  // Toggle every 10ns for 50MHz
+    end
+
+    initial begin
+        // Initialize signals
+        clk = 0;
+        address = 4'b0000;
+        data_in = 8'b00000000;
+        we = 0;
+
+        // Wait for some time and then start writing data
+        #20;
+
+        // Write data to address 0
+        address = 4'b0000;
+        data_in = 8'b10101010;
+        we = 1;
+        #20;  // Wait for one clock cycle
+
+        // Write data to address 1
+        address = 4'b0001;
+        data_in = 8'b11001100;
+        we = 1;
+        #20;
+
+        // Read data from address 0
+        address = 4'b0000;
+        we = 0; // Disable write
+        #20;
+
+        // Read data from address 1
+        address = 4'b0001;
+        #20;
+
+        // Read data from an unused address (e.g., address 2)
+        address = 4'b0010;
+        #20;
+
+        // End simulation
+        $finish;
+    end
+
+    initial begin
+        // Monitor changes to the data_out signal
+        $monitor("Time = %0t, Address = %b, Data In = %b, Write Enable = %b, Data Out = %b",
+                  $time, address, data_in, we, data_out);
+    end
+
+endmodule
